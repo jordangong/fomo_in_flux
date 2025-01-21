@@ -52,26 +52,3 @@ class Dataset(data_lib.DatasetScaffold):
             )
             os.system(f"wget -O {self.root}/quickdraw_train.txt {train_split}")
             os.system(f"wget -O {self.root}/quickdraw_test.txt {test_split}")
-
-        # split = pd.read_csv(os.path.join(self.root, f'quickdraw_{self.split}.txt'), delimiter=' ', header=None)
-        # self.data = list(split[0])
-        # class_to_idx = {key: i for i, key in enumerate(sorted(np.unique([x.split('/')[1] for x in self.data]), key=lambda x: x.lower()))}
-        # self.targets = []
-        # for x in self.data:
-        #     self.targets.append(class_to_idx[x.split('/')[1]])
-        # self.data = [os.path.join(self.root, x) for x in self.data]
-
-        # classnames = {}
-        # datadict = {}
-        # for target, data in zip(self.targets, self.data):
-        #     classnames[target] = data.split('/')[-2].replace('_', ' ')
-        #     if target not in datadict:
-        #         datadict[target] = []
-        #     datadict[target].append(data)
-
-        # #We only use 50% of the quickdraw train&test data for balancing.
-        # subset = 0.5
-        # datadict = {key: sorted(values)[:int(len(values) * subset)] for key, values in datadict.items()}
-        # self.data = [x for y in datadict.values() for x in y]
-        # self.targets = [[key for _ in range(len(values))] for key, values in datadict.items()]
-        # self.targets = [x for y in self.targets for x in y]

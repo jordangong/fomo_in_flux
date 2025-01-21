@@ -14,13 +14,6 @@ import zipfile
 import data_lib
 
 BASE_CLASSES = json.load(open("data_lib/00_info/FRU92_classnames.json", "r"))
-# BASE_CLASSES = [
-#     'almond', 'annona muricata', 'apple', 'apricot', 'artocarpus heterophyllus', 'avocado', 'banana', 'bayberry', 'bergamot pear', 'black currant', 'black grape', 'blood orange', 'blueberry', 'breadfruit', 'candied date', 'carambola', 'cashew nut', 'cherry',
-#     'cherry tomato', 'Chinese chestnut', 'citrus', 'coconut', 'crown pear', 'Dangshan Pear', 'dekopon', 'diospyros lotus', 'durian', 'fig', 'flat peach', 'gandaria', 'ginseng fruit', 'golden melon', 'grape', 'grape white', 'grapefruit', 'green apple',
-#     'green dates', 'guava', 'Hami melon', 'hawthorn', 'hazelnut', 'hickory', 'honey dew melon', 'housi pear', 'juicy peach', 'jujube', 'kiwi fruit', 'kumquat', 'lemon', 'lime', 'litchi', 'longan', 'loquat', 'macadamia', 'mandarin orange', 'mango', 'mangosteen',
-#     'mulberry', 'muskmelon', 'naseberry', 'navel orange', 'nectarine', 'netted melon', 'olive', 'papaya', 'passion fruit', 'pecans', 'persimmon', 'pineapple', 'pistachio', 'pitaya', 'plum', 'plum-leaf crab', 'pomegranate', 'pomelo', 'ponkan', 'prune', 'rambutan',
-#     'raspberry', 'red grape', 'salak', 'sand pear', 'sugar orange', 'sugarcane', 'sweetsop', 'syzygium jambos', 'trifoliate orange', 'walnuts', 'wampee', 'wax apple', 'winter jujube', 'yacon'
-# ]
 PRIMER = "A photo of a {}, a type of fruit."
 CLASSES = [PRIMER.format(x) for x in BASE_CLASSES]
 

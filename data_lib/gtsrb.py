@@ -53,36 +53,3 @@ class Dataset(data_lib.DatasetScaffold):
                 download_root=self.root,
                 md5="513f3c79a4c5141765e10e952eaa2478",
             )
-            # torchvision.datasets.utils.download_and_extract_archive(
-            #     f"{base_url}GTSRB_Final_Test_Images.zip",
-            #     download_root=self.root,
-            #     md5="c7e4e6327067d32654124b0fe9e82185",
-            # )
-            # torchvision.datasets.utils.download_and_extract_archive(
-            #     f"{base_url}GTSRB_Final_Test_GT.zip",
-            #     download_root=self.root,
-            #     md5="fe31e9c9270bbcd7b84b7f21a9d9d9e5",
-            # )
-
-        # train_val_split = 0.7
-        # data = [x[0] for x in torchvision.datasets.folder.make_dataset(self.root, extensions=(".ppm"))]
-        # classes = [sample.split('GTSRB/Training/')[-1].split('/')[0] for sample in data]
-        # data_dict = {}
-        # for path, classname in zip(data, classes):
-        #     if classname not in data_dict:
-        #         data_dict[classname] = []
-        #     data_dict[classname].append(path)
-
-        # if self.train:
-        #     data_dict = {key: item[:int(len(item) * train_val_split)] for key, item in data_dict.items()}
-        # else:
-        #     data_dict = {key: item[int(len(item) * train_val_split):] for key, item in data_dict.items()}
-
-        # class_to_idx = {class_name: idx for idx, class_name in enumerate(sorted(np.unique(classes)))}
-
-        # self.data = []
-        # self.targets = []
-        # for class_name, item in data_dict.items():
-        #     for path in item:
-        #         self.data.append(path)
-        #         self.targets.append(class_to_idx[class_name])

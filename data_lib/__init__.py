@@ -366,9 +366,12 @@ class DatasetScaffold(torch.utils.data.Dataset):
             return_dict["classnames"] = self.PARAMS["base_classes"][target]
             return_dict["primed_classes"] = self.PARAMS["classes"][target]
 
-        # If caption-data is available, we pass it through 'texts'.
+        # If caption-data is available or not use primer captions, we pass it through 'texts'.
         # If no caption-data is available, 'texts' will be filled by classnames.
-        if self.caption_data is None:
+        if self.caption_data is None or (
+            self.PARAMS["classes"] is not None and
+            self.args.experiment.dataset.primer_captions
+        ):
             return_dict["texts"] = self.PARAMS["classes"][target]
         else:
             # caption_key = index

@@ -22,16 +22,32 @@ timm_models = [
     "vit_large_patch14_224",
 ]
 # CLIP using the Default CLIP backbones.
-clip_models = ["clip_rn50", "clip_vit_b32", "clip_vit_l14"]
+clip_models = [
+    "clip_rn50",
+    "clip_rn101",
+    "clip_vit_b32",
+    "clip_vit_b16",
+    "clip_vit_l14",
+]
 # CLIP using the OpenCLIP backbones.
 openclip_models = [
     "openclip_vit_s16",
     "openclip_vit_b32",
+    "openclip_vit_b32_datacomp",
     "openclip_vit_b16",
+    "openclip_vit_b16_datacomp",
     "openclip_vit_l14",
+    "openclip_vit_l14_datacomp",
     "openclip_vit_h14",
     "openclip_vit_g14",
     "openclip_vit_G14",
+    "metaclip_vit_b32",
+    "metaclip_vit_b16",
+    "metaclip_vit_l14",
+    "metaclip_vit_h14",
+    "dfn_vit_b16",
+    "dfn_vit_l14",
+    "dfn_vit_h14",
 ]
 # Dictionary comprising model summaries:
 # [
@@ -79,7 +95,21 @@ model_dict = {
         [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
         None,
     ],
+    "clip_rn101": [
+        512,
+        None,
+        ["layer1", "layer2", "layer3", "layer4"],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        None,
+    ],
     "clip_vit_b32": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "clip_vit_b16": [
         512,
         None,
         [f"transformer.resblocks.{i}" for i in range(12)],
@@ -107,6 +137,13 @@ model_dict = {
         [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
         "conv1",
     ],
+    "openclip_vit_b32_datacomp": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
     "openclip_vit_b16": [
         512,
         None,
@@ -114,7 +151,21 @@ model_dict = {
         [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
         "conv1",
     ],
+    "openclip_vit_b16_datacomp": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
     "openclip_vit_l14": [
+        768,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(24)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "openclip_vit_l14_datacomp": [
         768,
         None,
         [f"transformer.resblocks.{i}" for i in range(24)],
@@ -140,6 +191,55 @@ model_dict = {
         None,
         [f"transformer.resblocks.{i}" for i in range(48)],
         [f"text_encoder.transformer.resblocks.{i}" for i in range(32)],
+        "conv1",
+    ],
+    "metaclip_vit_b32": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "metaclip_vit_b16": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "metaclip_vit_l14": [
+        768,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(24)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "metaclip_vit_h14": [
+        1024,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(32)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(24)],
+        "conv1",
+    ],
+    "dfn_vit_b16": [
+        512,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(12)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "dfn_vit_l14": [
+        768,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(24)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(12)],
+        "conv1",
+    ],
+    "dfn_vit_h14": [
+        1024,
+        None,
+        [f"transformer.resblocks.{i}" for i in range(32)],
+        [f"text_encoder.transformer.resblocks.{i}" for i in range(24)],
         "conv1",
     ],
 }
@@ -179,18 +279,30 @@ CLIP_STD = [0.26862954, 0.26130258, 0.27577711]
 
 clip_conv = {
     "clip_rn50": "RN50",
+    "clip_rn101": "RN101",
     "clip_vit_b32": "ViT-B/32",
+    "clip_vit_b16": "ViT-B/16",
     "clip_vit_l14": "ViT-L/14",
 }
 
 openclip_conv = {
     "openclip_vit_s16": ["ViT-S-16", "ViT-S-16_datacomp1b_lr0.001_b1_0.9_b2_0.95_wd0.2_warm4000_bs90k_constcooldown_s12.8B_inet66.2.pt"],  # specifically for the S-16 model we have to load the ckpt directly, please download this model using `wget https://huggingface.co/mehdidc/ViT-S-16_datacomp1b_lr0.001_b1_0.9_b2_0.95_wd0.2_warm4000_bs90k_constcooldown_s12.8B_inet66.2/resolve/main/ViT-S-16_datacomp1b_lr0.001_b1_0.9_b2_0.95_wd0.2_warm4000_bs90k_constcooldown_s12.8B_inet66.2.pt` and place it in the correct cache-directory so that the script can access it.
     "openclip_vit_b32": ["ViT-B-32", "laion2b_s34b_b79k"],
+    "openclip_vit_b32_datacomp": ["ViT-B-32", "datacomp_xl_s13b_b90k"],
     "openclip_vit_b16": ["ViT-B-16", "laion2b_s34b_b88k"],
+    "openclip_vit_b16_datacomp": ["ViT-B-16", "datacomp_xl_s13b_b90k"],
     "openclip_vit_l14": ["ViT-L-14", "laion2b_s32b_b82k"],
+    "openclip_vit_l14_datacomp": ["ViT-L-14", "datacomp_xl_s13b_b90k"],
     "openclip_vit_h14": ["ViT-H-14", "laion2b_s32b_b79k"],
     "openclip_vit_g14": ["ViT-g-14", "laion2b_s34b_b88k"],
     "openclip_vit_G14": ["ViT-bigG-14", "laion2b_s39b_b160k"],
+    "metaclip_vit_b32": ["ViT-B-32-quickgelu", "metaclip_fullcc"],
+    "metaclip_vit_b16": ["ViT-B-16-quickgelu", "metaclip_fullcc"],
+    "metaclip_vit_l14": ["ViT-L-14-quickgelu", "metaclip_fullcc"],
+    "metaclip_vit_h14": ["ViT-H-14-quickgelu", "metaclip_fullcc"],
+    "dfn_vit_b16": ["ViT-B-16", "dfn2b"],
+    "dfn_vit_l14": ["ViT-L-14-quickgelu", "dfn2b"],
+    "dfn_vit_h14": ["ViT-H-14-quickgelu", "dfn5b"],
 }
 
 

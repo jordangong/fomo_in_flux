@@ -474,10 +474,10 @@ class PredefinedSequenceExperiment(BaseExperiment):
     def load_from_checkpoint(self, state_dict):
         self.task = state_dict["task"]
         self.name = state_dict["name"]
-        
-        
-        
-        
+
+
+
+
 
 
 

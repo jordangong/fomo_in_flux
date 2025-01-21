@@ -123,6 +123,9 @@ experiment:
     test_transforms: [
       'Resize','CenterCrop','ToTensor','Normalize'
     ]
+
+    # Use primer captions in classification tasks.
+    primer_captions: False
   ### Buffer settings.
   buffer:
     # Number of datapoints to put into buffer.
@@ -224,6 +227,7 @@ experiment:
 log:
   id: null  # If set, will give deterministic checkpoint / folder pointer.
   use: True
+  full_eval: True
   checkpoint: True
   checkpoint_each_task: False
   checkpoint_no_recovery: False
@@ -633,6 +637,9 @@ continual:
       magmax:
         # scaling factor for the task vectors
         scaling_factor: 1.0
+  # [Online PAINT]
+  ema_online_paint:
+    avg_weight: 0.999
   # [BIC]
   bic:
     bic_epochs: 250
@@ -649,6 +656,14 @@ continual:
     # Options: "sample", "batch"
     fim_avg: batch
     max_fim_samples: 50000
+  # [DER] Dark Experience Replay
+  der:
+    # Penalty Weight.
+    alpha: 0.3
+  # [DERPP] Dark Experience Replay ++
+  derpp:
+    alpha: 0.1
+    beta: 0.5
   # [DoRA] Weight-Decomposed Low-Rank Adaptation
   dora:
     rank: 5
@@ -661,6 +676,27 @@ continual:
     head_block_idcs: []
     kv_only: False
     tune_logit_scale: False
+  # [DUALP] DualPrompting
+  dualp:
+    learnable_keys: True
+    batchwise_prompts: False
+    output_mode: 'average'
+    prompt_top_k: 5
+    prompt_length: 5
+    prompt_pool_size: 10
+    prompt_align_weight: 0.1
+    g_prompt_length: 5
+    g_prompt_layers: [0,1]
+    e_prompt_layers: [2,3,4]
+  # [ER] Standard Experience Replay
+  er:
+    alpha: 1
+  # [GDUMB] Greedy Dumb Learner
+  gdumb:
+    cos_lr_multi: 0.001
+    fitting_epochs: 100
+  # [GSS]
+  gss: {}
   # [GALORE] Galore optimizer
   galore:
     rank: 8
@@ -669,6 +705,17 @@ continual:
     proj_type: "std"
   # [JOINT] joint training
   joint: {}
+  # [LINEAR PROBE] linear probing
+  linear_probe: {}
+  # [L2P] Learning2Prompt
+  l2p:
+    learnable_keys: True
+    batchwise_prompts: False
+    output_mode: 'average'
+    prompt_top_k: 5
+    prompt_length: 5
+    prompt_pool_size: 10
+    prompt_align_weight: 0.1
   # [LORA] Low-Rank Adaptation Methods
   lora:
     rank: 5
@@ -688,6 +735,18 @@ continual:
   lnfit:
     ln_select: all
     tune_logit_scale: False
+  # [LWF] Learning without Forgetting
+  lwf:
+    alpha: 0.5
+    softmax_temp: 2
+  # [MAS] Memory-Adaptive Synapses
+  mas:
+    alpha: 0.5
+    # We use smaller weight values because norm-based gradients are high.
+    lambda_reg: 0.1
+    max_imp_samples: 50000
+  # [RPC]
+  rpc: {}
   # [SI] Synaptic Intelligence
   si:
     c: 0.5 # this is from stojanovski et al. (original si sets to 1)
@@ -704,3 +763,22 @@ continual:
     head_block_idcs: []
     kv_only: False
     tune_logit_scale: False
+  # [XDER]
+  xder:
+    m: 0.7
+    # Penalty Weight.
+    alpha: 0.3
+    # Penalty Weight.
+    beta: 0.8
+    gamma: 0.8
+    lambd: 0.05
+    eta: 0.001
+    temp: 5
+  # [ZSCL]
+  zscl:
+    # Distillation Temperature
+    temp: 2
+    # Weight Ensemble frequency
+    we_freq: 100
+    # Weight Consolodation strength
+    l2: 1

@@ -38,13 +38,3 @@ class Dataset(data_lib.DatasetScaffold):
 
     def _download_and_setup(self):
         pass
-        # self.imagenet_dataset = torchvision.datasets.ImageNet(self.root, split=self.split)
-        # self.data = [x[0] for x in self.imagenet_dataset.imgs]
-        # self.targets = [x[1] for x in self.imagenet_dataset.imgs]
-        # self.data = []
-        # self.targets = []
-        # for i, folder in enumerate(sorted(os.listdir(os.path.join(self.root, self.split)))):
-        #     if folder != 'README.txt':
-        #         for file in os.listdir(os.path.join(self.root, self.split, folder)):
-        #             self.data.append(os.path.join(self.root, self.split, folder, file))
-        #             self.targets.append(i)

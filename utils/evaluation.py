@@ -186,13 +186,18 @@ class Evaluator:
         subset_only = subset_only if subset_only is not None else self.args.experiment.evaluation.validate_on_subset
 
         # Update evaluation datasets when evaluating only on subsets of test datasets (subset_only < 1).
+        # Save full datasets for later restoration.
+        full_datasets = {}
         if subset_only < 1:
             if not exclude_from_aggregation:
                 termcolor.cprint('Performing evaluation on {0:3.1f}% subset.'.format(subset_only * 100), 'blue', attrs=[])
 
             for key in all_test_loaders.keys():
                 eval_data = all_test_loaders[key].dataset.data
+                eval_preloaded_image_data = all_test_loaders[key].dataset.preloaded_image_data
                 eval_targets = all_test_loaders[key].dataset.targets
+                full_datasets[key] = [eval_data, eval_preloaded_image_data, eval_targets]
+
                 unique_targets = np.unique(eval_targets)
 
                 # Require at least num_classes * 2 samples over at least 300 samples. Otherwise use full subset.
@@ -219,6 +224,8 @@ class Evaluator:
                     all_test_loaders[key].dataset.data = eval_data[subset_idcs]
                 elif isinstance(eval_data, list):
                     all_test_loaders[key].dataset.data = [eval_data[i] for i in subset_idcs]
+                if eval_preloaded_image_data:
+                    all_test_loaders[key].dataset.preloaded_image_data = [eval_preloaded_image_data[i] for i in subset_idcs]
                 if isinstance(eval_targets, np.ndarray) or isinstance(eval_targets, torch.Tensor):
                     all_test_loaders[key].dataset.targets = eval_targets[subset_idcs]
                 elif isinstance(eval_targets, list):
@@ -375,6 +382,13 @@ class Evaluator:
 
         continual_learner.train(status)
 
+        # Restore full datasets if subset_only < 1.
+        if subset_only < 1 and full_datasets:
+            for key in all_test_loaders.keys():
+                all_test_loaders[key].dataset.data = full_datasets[key][0]
+                all_test_loaders[key].dataset.preloaded_image_data = full_datasets[key][1]
+                all_test_loaders[key].dataset.targets = full_datasets[key][2]
+
         if not exclude_from_aggregation:
             print('Finished evaluation in {0:4.2f}s.\n'.format(time.time() - eval_start_time))
 
@@ -514,6 +528,7 @@ class Evaluator:
                 termcolor.cprint(f'No results for {metric_name.capitalize()} across all datasets', 'blue', attrs=[])
             print('\n')
 
+
     def write_results(self, format: str='json', custom_data: Any=None, custom_name: str=None):
         data_to_store = self.results if custom_data is None else custom_data
         store_name = 'evaluation_results' if custom_name is None else custom_name
@@ -580,12 +595,14 @@ class Evaluator:
                         eval_only_vals.append(exp_val[ds])
                     else:
                         train_vals.append(exp_val[ds])
-            
-            ret_val = np.nan if not full_vals else np.mean(full_vals)
-            wandb_log_dict[f'{preemble}.alldata-full.total.{metric_name}'] = ret_val
-            ret_val = np.nan if not train_vals else np.mean(train_vals)
-            wandb_log_dict[f'{preemble}.alldata-trainonly.total.{metric_name}'] = ret_val
-            ret_val = np.nan if not eval_only_vals else np.mean(eval_only_vals)
-            wandb_log_dict[f'{preemble}.alldata-evalonly.total.{metric_name}'] = ret_val
+
+            full_ret_val = np.nan if not full_vals else np.mean(full_vals)
+            wandb_log_dict[f'{preemble}.alldata-full.total.{metric_name}'] = full_ret_val
+            train_ret_val = np.nan if not train_vals else np.mean(train_vals)
+            wandb_log_dict[f'{preemble}.alldata-trainonly.total.{metric_name}'] = train_ret_val
+            eval_ret_val = np.nan if not eval_only_vals else np.mean(eval_only_vals)
+            wandb_log_dict[f'{preemble}.alldata-evalonly.total.{metric_name}'] = eval_ret_val
+            traineval_geomean = np.sqrt(train_ret_val * eval_ret_val)
+            wandb_log_dict[f'{preemble}.alldata-traineval_geomean.total.{metric_name}'] = traineval_geomean
         
         return wandb_log_dict

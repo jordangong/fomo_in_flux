@@ -46,5 +46,5 @@ class Dataset(data_lib.DatasetScaffold):
             split=self.split,
             transform=None,
             target_transform=None,
-            download=self.download,
+            download=False,  # FIXME: URL is broken, download manually.
         )

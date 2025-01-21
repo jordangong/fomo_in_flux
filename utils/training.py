@@ -110,18 +110,21 @@ def train(
     # Measure initial zero-shot performance. For non-pretrained models, should be ~ 1/#classes.
     if evaluator.pre_train_results is None:
         zero_start_time = time.time()
-        termcolor.cprint(
-            "Evaluating initial zero-shot performance on full evaluation data.\n",
-            "green",
-            attrs=[],
-        )
-        default_eval_result_dict = pre_train_result_dict = (
-            evaluator.evaluate_and_summarize(
-                continual_learner, experiment, subset_only=1
-            )
-        )
-
         subset_val = args.experiment.evaluation.validate_on_subset
+
+        # Evaluate initial zero-shot performance.
+        if args.log.full_eval or subset_val == 1 or args.zeroshot_only:
+            termcolor.cprint(
+                "Evaluating initial zero-shot performance on full evaluation data.\n",
+                "green",
+                attrs=[],
+            )
+            default_eval_result_dict = pre_train_result_dict = (
+                evaluator.evaluate_and_summarize(
+                    continual_learner, experiment, subset_only=1
+                )
+            )
+
         if subset_val < 1:
             termcolor.cprint(
                 "Evaluating initial zero-shot performance on evaluation data subset.\n",
@@ -138,21 +141,23 @@ def train(
 
         # Log zero_shot results via W&B if needed.
         if args.log.use:
-            # This logs the zeroshot performance data separately.
-            default_log_dict = evaluator.prepare_log_dict(
-                custom_log_data=default_eval_result_dict,
-                custom_preemble="start_zeroshot",
-                merge_to_train_results=False,
-            )
-            default_log_dict["global_counter"] = global_counter
-            # Store initial zero-shot performance in local file.
-            json.dump(
-                default_log_dict,
-                open(
-                    os.path.join(evaluator.log_folder, "zeroshot_score_initial.json"),
-                    "w",
-                ),
-            )
+            default_log_dict = {}
+            if args.log.full_eval or subset_val == 1 or args.zeroshot_only:
+                # This logs the zeroshot performance data separately.
+                default_log_dict = evaluator.prepare_log_dict(
+                    custom_log_data=default_eval_result_dict,
+                    custom_preemble="start_zeroshot",
+                    merge_to_train_results=False,
+                )
+                default_log_dict["global_counter"] = global_counter
+                # Store initial zero-shot performance in local file.
+                json.dump(
+                    default_log_dict,
+                    open(
+                        os.path.join(evaluator.log_folder, "zeroshot_score_initial.json"),
+                        "w",
+                    ),
+                )
             # This logs the zeroshot performance (with optional subsetting) as part of the training log process.
             pre_train_log_dict = evaluator.prepare_log_dict(use_pre_train_results=True)
             # Upload to W&B.
@@ -504,27 +509,28 @@ def train(
         # Update task information in experiment.
         experiment.finish_task()
 
-    # IF experiment.evaluation.additional_datasets_subets < 1, evaluation is only performed on a subset of the data during training after each task.
-    # This means it is important that after having seen all tasks a full and complete evaluation run is performed.
-    final_zero_start_time = time.time()
-    termcolor.cprint(
-        "\nEvaluating final zero-shot performance on full evaluation data.\n", 
-        "green", 
-        attrs=[])
-    final_eval_result_dict = evaluator.evaluate_and_summarize(
-        continual_learner, experiment, subset_only=1)
-    if args.log.use:
-        # This logs the final zeroshot performance data separately.
-        final_log_dict = evaluator.prepare_log_dict(
-            custom_log_data=final_eval_result_dict, 
-            custom_preemble="start_zeroshot")
-        # Store final results in json file.
-        json.dump(
-            final_log_dict, 
-            open(
-                os.path.join(
-                    evaluator.log_folder, 
-                    'zeroshot_score_final.json'), 'w'))
-        # Upload to W&B.
-        wandb.log(final_log_dict)
-    print('Completed in {0:4.2f}s'.format(time.time() - final_zero_start_time))
+    if args.log.full_eval:
+        # IF experiment.evaluation.additional_datasets_subets < 1, evaluation is only performed on a subset of the data during training after each task.
+        # This means it is important that after having seen all tasks a full and complete evaluation run is performed.
+        final_zero_start_time = time.time()
+        termcolor.cprint(
+            "\nEvaluating final zero-shot performance on full evaluation data.\n",
+            "green",
+            attrs=[])
+        final_eval_result_dict = evaluator.evaluate_and_summarize(
+            continual_learner, experiment, subset_only=1)
+        if args.log.use:
+            # This logs the final zeroshot performance data separately.
+            final_log_dict = evaluator.prepare_log_dict(
+                custom_log_data=final_eval_result_dict,
+                custom_preemble="start_zeroshot")
+            # Store final results in json file.
+            json.dump(
+                final_log_dict,
+                open(
+                    os.path.join(
+                        evaluator.log_folder,
+                        'zeroshot_score_final.json'), 'w'))
+            # Upload to W&B.
+            wandb.log(final_log_dict)
+        print('Completed in {0:4.2f}s'.format(time.time() - final_zero_start_time))

@@ -305,7 +305,7 @@ class BaseContinualLearner(nn.Module):
             self.opt = torch.optim.AdamW(self.to_optimize)
 
         ### Mixed Precision Scaler.
-        self.scaler = torch.cuda.amp.GradScaler()
+        self.scaler = torch.amp.GradScaler('cuda')
 
         # Set up scheduler.
         assert_str = f"No scheduler {scheduler} available. Please choose from {self.AVAILABLE_SCHEDULER}."

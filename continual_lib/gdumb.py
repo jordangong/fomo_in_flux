@@ -53,7 +53,7 @@ def fit_buffer(
     )
     epoch_iterator = tqdm.tqdm(range(epochs), desc="Fitting to GDumb Buffer")
 
-    scaler = torch.cuda.amp.GradScaler()
+    scaler = torch.amp.GradScaler('cuda')
 
     for epoch in epoch_iterator:
 
@@ -85,7 +85,7 @@ def fit_buffer(
             buf_inputs = buf_inputs.to(device)
             buf_targets = buf_targets.to(device)
 
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast("cuda"):
                 buf_outputs = model(buf_inputs)
                 loss = f_loss(buf_outputs, buf_targets.to(torch.long))
                 scaler.scale(loss).backward()

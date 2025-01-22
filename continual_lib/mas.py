@@ -63,7 +63,7 @@ class Model(continual_lib.BaseContinualLearner):
             )
 
             self.opt.zero_grad()
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast("cuda"):
                 outputs = self.backbone(inputs)
                 # We reduce the norm size to avoid infinite gradients with mixed precision.
                 loss = torch.norm(outputs, p="fro", dim=1).pow(2).mean() / 10000
@@ -92,7 +92,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, inputs, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             outputs = self.backbone(inputs)
             penalty = self.penalty()
             base_loss = self.loss(outputs, targets)

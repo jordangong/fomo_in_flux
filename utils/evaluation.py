@@ -246,7 +246,7 @@ class Evaluator:
                 if not is_retrieval_exp:
                     # Simple classification case.
                     classes = test_loader.dataset.PARAMS['classes']
-                    with torch.cuda.amp.autocast(), torch.no_grad():
+                    with torch.amp.autocast("cuda"), torch.no_grad():
                         embed_coll = continual_learner.head.module.embed_text(classes, self.args.experiment.task.batch_size)
                     custom_heads[dataset_name] = embed_coll
                 else:
@@ -283,7 +283,7 @@ class Evaluator:
                     else:
                         caption_targets = list(range(len(captions)))
 
-                    with torch.cuda.amp.autocast(), torch.no_grad():
+                    with torch.amp.autocast("cuda"), torch.no_grad():
                         embed_coll = continual_learner.head.module.embed_text(captions, self.args.experiment.task.batch_size)
 
                     custom_heads[dataset_name] = embed_coll
@@ -306,7 +306,7 @@ class Evaluator:
             count = 0
 
             for i, data in enumerate(batch_iterator):
-                with torch.cuda.amp.autocast(), torch.no_grad():
+                with torch.amp.autocast("cuda"), torch.no_grad():
                     batch_size = len(data['images'])
                     data['images'] = data['images'].to(continual_learner.device)
                     if is_retrieval_exp:

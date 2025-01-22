@@ -71,8 +71,8 @@ experiment:
     warmup_perc: 0.1
 
 log:
-  group: fif_debug
   project: simple_fif_debug_run
+  group: fif_debug
   checkpoint: False
   use: False
 

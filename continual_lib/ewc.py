@@ -137,7 +137,7 @@ class Model(continual_lib.BaseContinualLearner):
                 texts = None
 
             self.opt.zero_grad()
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast("cuda"):
                 # Update get grads options.
                 outputs = self.forward(
                     experiment=experiment, images=images, texts=texts, targets=targets
@@ -178,7 +178,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

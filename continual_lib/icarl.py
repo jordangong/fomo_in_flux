@@ -21,7 +21,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, inputs, targets, non_aug_inputs=None, **kwargs):
         self.opt.zero_grad()
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             outputs = self.backbone(inputs)
             loss = self.loss(outputs, targets)
 

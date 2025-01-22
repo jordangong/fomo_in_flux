@@ -32,7 +32,30 @@ experiment:
 
   evaluation:
     batch_size: 512
-    additional_datasets: ['caltech101','caltech256','cars196','cifar10','domainnet_quickdraw','eurosat','fashionmnist','food101','gtsrb','imagenet','imagenet_a','imagenet_d','imagenet_r','imagenet_s','imagenet_v2','mnist','monkeys10','oxford_pets','stl10','svhn','mscoco','flickr30k']
+    additional_datasets: [
+      'caltech101',
+      'caltech256',
+      'cars196',
+      'cifar10',
+      'domainnet_quickdraw',
+      'eurosat',
+      'fashionmnist',
+      'flickr30k',
+      'food101',
+      'gtsrb',
+      'imagenet',
+      'imagenet_a',
+      'imagenet_d',
+      'imagenet_r',
+      'imagenet_s',
+      'imagenet_v2',
+      'mnist',
+      'monkeys10',
+      'mscoco',
+      'oxford_pets',
+      'stl10',
+      'svhn'
+    ]
     validate_on_subset: 0.1
 
   # If methods utilize a buffer:
@@ -66,9 +89,8 @@ experiment:
 
 log:
   project: continualfomo_finetune
-  group: test
+  group: openclip_vit_b16
   name: ema_paint_task_arithmetic
-  folder: ./checkpoints
   checkpoint: False
 
 continual:

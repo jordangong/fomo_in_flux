@@ -30,7 +30,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             outputs = self.forward(images=images, **kwargs)
             loss = self.loss(targets=targets, **outputs, **kwargs)
 

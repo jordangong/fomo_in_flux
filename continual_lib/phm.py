@@ -88,7 +88,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, inputs, targets, **kwargs):
         self.opt.zero_grad()
         global_task = kwargs["experiment"].global_task
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             if (
                 self.freeze_non_task_logits
                 and global_task not in self.global_tasks_seen

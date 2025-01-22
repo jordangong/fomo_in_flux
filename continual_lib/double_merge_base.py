@@ -49,7 +49,7 @@ class DoubleMergeBase(continual_lib.BaseContinualLearner):
         self.opt.zero_grad()
 
         global_task = kwargs["experiment"].global_task
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             # Get masking indices if needed.
             if self.freeze_non_task_logits is not None:
                 if (

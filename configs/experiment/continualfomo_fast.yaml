@@ -87,8 +87,8 @@ experiment:
     warmup_perc: 0.1
 
 log:
-  group: openclip_vit_b32
   project: continualfomo_default
+  group: openclip_vit_b32
   checkpoint: False
 
 continual:

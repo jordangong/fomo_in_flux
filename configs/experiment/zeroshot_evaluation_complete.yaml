@@ -19,14 +19,56 @@ experiment:
     
   dataset:
     name: [
-      'ai2diagrams','artbench10','birdsnap','caltech101','caltech256','cars196','cifar100','cifar10',
-      'clrs','country211','cub200','df20mini','dollarstreet','domainnet_clipart',
-      'domainnet_infograph','domainnet_painting','domainnet_quickdraw',
-      'domainnet_sketch','dsprites','dtd','eurosat','fashionmnist','fgvcaircraft',
-      'flowers102','food101','fru92','gtsrb','inaturalist2021','mitstates','mnist',
-      'monkeys10','mtsd','mvtecad_adapt','objectnet','obsc_animals','obsc_things','oxford_pets',
-      'openimages','patternnet','places365','quilt','resisc45','shapes3d','snake_clef','sun397','stl10',
-      'svhn','synthclip106','veg200','zappos50k'
+      'ai2diagrams',
+      'artbench10',
+      'birdsnap',
+      'caltech101',
+      'caltech256',
+      'cars196',
+      'cifar100',
+      'cifar10',
+      'clrs',
+      'country211',
+      'cub200',
+      'df20mini',
+      'dollarstreet',
+      'domainnet_clipart',
+      'domainnet_infograph',
+      'domainnet_painting',
+      'domainnet_quickdraw',
+      'domainnet_sketch',
+      'dsprites',
+      'dtd',
+      'eurosat',
+      'fashionmnist',
+      'fgvcaircraft',
+      'flowers102',
+      'food101',
+      'fru92',
+      'gtsrb',
+      'inaturalist2021',
+      'mitstates',
+      'mnist',
+      'monkeys10',
+      'mtsd',
+      'mvtecad_adapt',
+      'objectnet',
+      'obsc_animals',
+      'obsc_things',
+      'oxford_pets',
+      'openimages',
+      'patternnet',
+      'places365',
+      'quilt',
+      'resisc45',
+      'shapes3d',
+      'snake_clef',
+      'sun397',
+      'stl10',
+      'svhn',
+      'synthclip106',
+      'veg200',
+      'zappos50k'
     ]
     sequence: null
     path: './data'
@@ -63,10 +105,10 @@ experiment:
     ]
 
 log:
-  use: False
-  checkpoint: False
   group: method_eval
   project: zeroshot_evaluation
+  checkpoint: False
+  use: False
 
 continual:
   method: finetune

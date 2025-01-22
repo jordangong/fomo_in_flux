@@ -555,7 +555,7 @@ class SemanticHead(torch.nn.Module):
             self.tokenizer = clip.tokenize
 
         # Tokenize classnames.
-        with torch.cuda.amp.autocast(), torch.no_grad():
+        with torch.amp.autocast("cuda"), torch.no_grad():
             text_tokens = self.tokenizer(classnames).cuda()
 
         self.head = []
@@ -563,7 +563,7 @@ class SemanticHead(torch.nn.Module):
         num_batches = int(np.ceil(len(text_tokens) / batch_size))
 
         # Compute classname embeddings
-        with torch.cuda.amp.autocast(), torch.no_grad():
+        with torch.amp.autocast("cuda"), torch.no_grad():
             for i in tqdm.tqdm(range(num_batches), desc="Encoding text features..."):
                 self.head.append(
                     torch.nn.functional.normalize(

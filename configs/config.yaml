@@ -230,6 +230,7 @@ log:
   full_eval: True
   checkpoint: True
   checkpoint_each_task: False
+  checkpoint_zero_shot: False
   checkpoint_no_recovery: False
   checkpoint_full: False
   full_replication: True

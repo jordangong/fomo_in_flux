@@ -36,7 +36,7 @@ def cycle(iterable):
             yield next(iterator)
         except StopIteration:
             iterator = iter(iterable)
-            
+
 def setup_wandb(args: omegaconf.DictConfig, wandb_run_id=None) -> None:
     """Setup Weights & Biases logging."""
 
@@ -169,6 +169,20 @@ def train(
         import sys
         sys.exit()
 
+    # Checkpoint zero-shot model if needed.
+    if (args.log.checkpoint and not args.log.checkpoint_no_recovery
+            and starting_task == 0 and args.log.checkpoint_zero_shot):
+        chkpt_file = {
+            'task': 0,
+            'global_counter': global_counter,
+            'continual_learner': continual_learner.checkpoint,
+            'experiment': experiment.checkpoint,
+            'evaluator': evaluator.checkpoint,
+            'wandb.run.id': wandb_run_id
+        }
+        zs_ckpt_path = args.log.log_folder / 'checkpoint_0.pth.tar'
+        termcolor.cprint(f"Stored zero-shot checkpoint at {zs_ckpt_path}.", "yellow", attrs=[])
+        torch.save(chkpt_file, zs_ckpt_path)
 
     # Start training on data stream.
     termcolor.cprint(
@@ -206,7 +220,7 @@ def train(
                             custom_seed=task * 100000 + args.experiment.seed + 1
                         ) if args.experiment.dataset.pretraining_data_path is not None else None
                     datacomp_loader = cycle(datacomp_loader)
-                                        
+
             elif task == 1:  # potentially just set to >= 1 for full replication.
                 experiment.task_batch_size = args.experiment.task.update_pool_batch_size
                 if args.experiment.task.pretraining_batch_size > 0:
@@ -218,7 +232,7 @@ def train(
                         custom_seed=task * 100000 + args.experiment.seed + 1
                     ) if args.experiment.dataset.pretraining_data_path is not None else None
                     datacomp_loader = cycle(datacomp_loader)
-                
+
         # Get task-specific dataloaders.
         utils.conf.set_random_seed(task * 100000, set_backend=args.log.full_replication)
         task_dataloaders = experiment.give_task_dataloaders()
@@ -259,7 +273,7 @@ def train(
             experiment=experiment
         )
         continual_learner.begin_task(
-            scheduler_steps=train_iterations, 
+            scheduler_steps=train_iterations,
             milestone_steps=milestone_iterations)
 
         ################################################
@@ -281,7 +295,7 @@ def train(
             train_loader.dataset.set_len(num_train_samples)
         if buffer_loader and num_train_samples > len(buffer_loader.dataset):
             buffer_loader.dataset.set_len(num_train_samples)
-        
+
         utils.conf.set_random_seed(task * 100000, set_backend=args.log.full_replication)
 
         training_step_data = []
@@ -305,13 +319,13 @@ def train(
                 # if datacomp_batch exists, couple both batches together for training
                 if datacomp_batch is not None:
                     batch_size += datacomp_batch[0].shape[0]
-                
+
                 #### Uncomment for printing training throughput
                 # tt = time.time() - st
                 # num_samples += batch_size
                 # if batch_index % 10 == 0:
                 #     print('Throughput: {}'.format(num_samples / tt))
-                    
+
                 # (Optional) Warmup Functionality
                 warmup_str = ''
                 if args.experiment.task.n_warmup_samples > 0:
@@ -370,7 +384,7 @@ def train(
                         else:
                             data['images'] = torch.cat([datacomp_batch[0].to(data['images'].device)], dim=0)
                             data['texts'] = datacomp_batch[1]
-                
+
                 # [CL] Compute base CL step.
                 loss = continual_learner.observe(experiment=experiment, **data)
                 if np.isinf(loss) or np.isnan(loss):
@@ -399,7 +413,7 @@ def train(
                     stability_gap_log_dict = evaluator.prepare_log_dict(
                         stability_gap_results_dict
                     )
-                    
+
                 # Log data to W&B if needed.
                 base_log_context['global_counter'] = global_counter
                 if continual_learner.ON_TASK_LEARNING:
@@ -456,7 +470,7 @@ def train(
                     experiment,
                     subset_only=args.experiment.evaluation.validate_on_subset,
                 )
-                
+
             # After each task, if not set otherwise, a complete checkpoint is stored:
             if args.log.checkpoint and not args.log.checkpoint_no_recovery:
                 chkpt_file = {
@@ -505,7 +519,7 @@ def train(
                         task_end_time - task_start_time
                     )
                 )
-                
+
         # Update task information in experiment.
         experiment.finish_task()
 

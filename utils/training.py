@@ -68,7 +68,7 @@ def setup_wandb(args: omegaconf.DictConfig, wandb_run_id=None) -> None:
     )
     run_id = wandb.run.id
     args = omegaconf.OmegaConf.to_container(args, resolve=True, throw_on_missing=True)
-    wandb.config.update(args)
+    wandb.config.update(args, allow_val_change=True)
     return run_id
 
 def train(

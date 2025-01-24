@@ -522,9 +522,11 @@ class BaseContinualLearner(nn.Module):
         **kwargs,
     ):
         with torch.no_grad():
-            # Store latest training weights.
-            self.checkpoint_storage["running"]["backbone"].append(copy.deepcopy(self.backbone.state_dict()))
-            self.checkpoint_storage["running"]["head"].append(copy.deepcopy(self.head.state_dict()))
+            # Store latest training weights on CPU to save GPU memory.
+            backbone_state_dict = {k: v.cpu() for k, v in self.backbone.state_dict().items()}
+            head_state_dict = {k: v.cpu() for k, v in self.head.state_dict().items()}
+            self.checkpoint_storage["running"]["backbone"].append(copy.deepcopy(backbone_state_dict))
+            self.checkpoint_storage["running"]["head"].append(copy.deepcopy(head_state_dict))
 
     def gradient_update(self, loss: torch.Tensor):
         """Perform gradient update

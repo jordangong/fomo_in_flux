@@ -259,7 +259,7 @@ def main(args: DictConfig) -> None:
     if args.log.id is None:
         log_folder = os.path.join(
             args.log.folder,
-            f"{args.log.project}_{args.log.group}_s-{args.experiment.seed}_{experiment.name}",
+            f"{args.log.project}_{args.log.group}_{args.log.name}_s-{args.experiment.seed}_{experiment.name}",
         )
     else:
         log_folder = os.path.join(args.log.folder, str(args.log.id))

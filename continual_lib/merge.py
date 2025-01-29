@@ -346,7 +346,7 @@ class Interpolation(BaseLinesMerge, BaseWeightedMerge):
         if self.apply_lines:
 
             # First, get the depth of the model
-            self._infer_depth(state_dicts)
+            self._infer_depth(state_dicts[0])
 
             # Generate the key blocks corresponding to the layers of the model
             key_blocks = [f".resblocks.{i}." for i in range(self.depth)]

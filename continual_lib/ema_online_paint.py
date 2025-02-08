@@ -47,10 +47,10 @@ class Model(continual_lib.BaseContinualLearner):
             self.aux_device = f"cuda:{aux_device_id}"
 
         # Init EMA model dicts
-        self.ema_model_dict = {
-            "backbone": copy.deepcopy({k: v.to(self.aux_device) for k, v in self.backbone.state_dict().items()}),
-            "head": copy.deepcopy({k: v.to(self.aux_device) for k, v in self.head.state_dict().items()})
-        }
+        self.ema_model_dict = copy.deepcopy({
+            "backbone": {k: v.to(self.aux_device) for k, v in self.backbone.state_dict().items()},
+            "head": {k: v.to(self.aux_device) for k, v in self.head.state_dict().items()}
+        })
 
     def observe(self, images, targets, **kwargs):
         # step through the update_model in each batch of a given task
@@ -156,8 +156,12 @@ class Model(continual_lib.BaseContinualLearner):
 
     def define_evaluation_weights(self, **kwargs):
         for mode in ["backbone", "head"]:
-            self.checkpoint_storage["eval"][mode] = copy.deepcopy(self.ema_model_dict[mode])
+            self.checkpoint_storage["eval"][mode] = copy.deepcopy(
+                {k: v.cpu() for k, v, in self.ema_model_dict[mode].items()}
+            )
 
     def define_training_weights(self, **kwargs):
         for mode in ["backbone", "head"]:
-            self.checkpoint_storage["train"][mode] = copy.deepcopy(self.ema_model_dict[mode])
+            self.checkpoint_storage["train"][mode] = copy.deepcopy(
+                {k: v.cpu() for k, v, in self.ema_model_dict[mode].items()}
+            )

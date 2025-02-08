@@ -5,6 +5,7 @@ import numpy as np
 import torch
 
 import continual_lib
+from continual_lib.merge import compute_dots
 
 
 class Model(continual_lib.BaseContinualLearner):
@@ -45,23 +46,11 @@ class Model(continual_lib.BaseContinualLearner):
             aux_device_id = gpus // 2
             self.aux_device = f"cuda:{aux_device_id}"
 
-        # keep zero-shot backbone weights on cpu to save GPU mem, can move them to the gpu mem when required
-        self.zero_shot_model_dict_backbone = copy.deepcopy(
-            {k: v.cpu() for k, v in self.backbone.state_dict().items()}
-        )
-        # currently storing two backbone model copies one on the cpu, one on the gpu
-        self.paint_model_dict_backbone = copy.deepcopy(
-            {k: v.to(self.aux_device) for k, v in self.backbone.state_dict().items()}
-        )
-
-        # keep zero-shot head weights on cpu to save GPU mem, can move them to the gpu mem when required
-        self.zero_shot_model_dict_head = copy.deepcopy(
-            {k: v.cpu() for k, v in self.head.state_dict().items()}
-        )
-        # currently storing two head model copies one on the cpu, one on the gpu
-        self.paint_model_dict_head = copy.deepcopy(
-            {k: v.to(self.aux_device) for k, v in self.head.state_dict().items()}
-        )
+        # Init EMA model dicts
+        self.ema_model_dict = {
+            "backbone": copy.deepcopy({k: v.to(self.aux_device) for k, v in self.backbone.state_dict().items()}),
+            "head": copy.deepcopy({k: v.to(self.aux_device) for k, v in self.head.state_dict().items()})
+        }
 
     def observe(self, images, targets, **kwargs):
         # step through the update_model in each batch of a given task
@@ -95,26 +84,41 @@ class Model(continual_lib.BaseContinualLearner):
         self.gradient_update(loss)
 
         # after each step, set the backbone weights and update_model weights to the update
-        # from eqn at top of this script; do the weight merging on cpu to save GPU memory
+        # from eqn at top of this script
         with torch.no_grad():
             ### update backbone
-            self.paint_model_dict_backbone = self.average_weights(
-                self.backbone.state_dict(), self.paint_model_dict_backbone
+            self.ema_model_dict["backbone"] = self.average_weights(
+                self.backbone.state_dict(), self.ema_model_dict["backbone"]
             )
 
             ### update head
-            self.paint_model_dict_head = self.average_weights(
-                self.head.state_dict(), self.paint_model_dict_head
+            self.ema_model_dict["head"] = self.average_weights(
+                self.head.state_dict(), self.ema_model_dict["head"]
             )
 
         return loss.item()
 
     def end_task(self, experiment, **kwargs):
-        # Update base backbone to use interpolated weights for evaluation.
-        self.backbone.load_state_dict(self.paint_model_dict_backbone)
+        # at the end of each task, merge the backbone and head weights using the specified merge technique
+        with torch.no_grad():
+            base_state_dicts = {
+                "backbone": {k: v.cpu() for k, v in self.backbone.state_dict().items()},
+                "head": {k: v.cpu() for k, v in self.head.state_dict().items()},
+            }
 
-        # Update base head to use interpolated weights for evaluation.
-        self.head.load_state_dict(self.paint_model_dict_head)
+            # update backbone
+            dots = {}
+            for mode in ["backbone", "head"]:
+                # We store post-training evaluated weights here.
+                self.checkpoint_storage["running"][mode].append(copy.deepcopy(base_state_dicts[mode]))
+                # Compute respective dot products.
+                dots[mode] = compute_dots(
+                    base_state_dicts[mode], self.checkpoint_storage["train"][mode]
+                )
+        return {
+            **{f"dot-prods.backbone.{k}": v for k, v in dots["backbone"].items()},
+            **{f"dot-prods.head.{k}": v for k, v in dots["head"].items()},
+        }
 
     def average_weights(self, weight_dict1, weight_dict2):
         """
@@ -150,9 +154,10 @@ class Model(continual_lib.BaseContinualLearner):
         }
         return theta
 
-    @property
-    def checkpoint(self):
-        return {"self": self.state_dict()}
+    def define_evaluation_weights(self, **kwargs):
+        for mode in ["backbone", "head"]:
+            self.checkpoint_storage["eval"][mode] = copy.deepcopy(self.ema_model_dict[mode])
 
-    def load_from_checkpoint(self, state_dict):
-        self.load_state_dict(state_dict["self"])
+    def define_training_weights(self, **kwargs):
+        for mode in ["backbone", "head"]:
+            self.checkpoint_storage["train"][mode] = copy.deepcopy(self.ema_model_dict[mode])

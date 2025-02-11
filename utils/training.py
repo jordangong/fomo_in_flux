@@ -92,7 +92,7 @@ def train(
             "green",
             attrs=["bold"],
         )
-        chkpt_file = torch.load(args.log.log_folder / "checkpoint.pth.tar")
+        chkpt_file = torch.load(args.log.log_folder / "checkpoint.pth.tar", weights_only=False)
         continual_learner.load_from_checkpoint(chkpt_file["continual_learner"])
         experiment.load_from_checkpoint(chkpt_file["experiment"])
         evaluator.load_from_checkpoint(chkpt_file["evaluator"])

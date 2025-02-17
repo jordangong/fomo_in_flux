@@ -505,8 +505,26 @@ def get_backbone_and_head(
         for _, w in backbone.named_parameters():
             w.requires_grad = False
 
+    if args.experiment.backbone.freeze_norm == "all":
+        # freeze all normalization layers
+        _freeze_norm_layers(backbone)
+        _freeze_norm_layers(head)
+    elif args.experiment.backbone.freeze_norm == "backbone":
+        # freeze all normalization layers in the backbone
+        _freeze_norm_layers(backbone)
+    elif args.experiment.backbone.freeze_norm == "head":
+        # freeze all normalization layers in the head
+        _freeze_norm_layers(head)
+    elif args.experiment.backbone.freeze_norm != "none":
+        raise ValueError(f"Unknown freeze_norm option: {args.experiment.backbone.freeze_norm}")
+
     return backbone, head, dataloader_updates
 
+def _freeze_norm_layers(module):
+    # Helper function to freeze normalization layers in a module
+    for name, w in module.named_parameters():
+        if any(x in name for x in ["norm", "bn", "gn", "ln"]):
+            w.requires_grad = False
 
 ########################## Available Head Types
 

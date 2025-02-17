@@ -70,6 +70,9 @@ experiment:
     # Choose to freeze the model head. For CLIP-style models, this will generally be the text encoder
     # [currently deprecated]
     freeze_head: False
+    # Choose to freeze the norm layers in the model.
+    # Can be 'none', 'all', 'backbone', 'head'
+    freeze_norm: 'none'
     # If available, use half precision:
     half_precision: True
     # If pretraining should be used.

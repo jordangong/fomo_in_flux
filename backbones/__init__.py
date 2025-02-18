@@ -507,23 +507,43 @@ def get_backbone_and_head(
 
     if args.experiment.backbone.freeze_norm == "all":
         # freeze all normalization layers
-        _freeze_norm_layers(backbone)
-        _freeze_norm_layers(head)
+        _freeze_layers(backbone, name="norm")
+        _freeze_layers(head, name="norm")
     elif args.experiment.backbone.freeze_norm == "backbone":
         # freeze all normalization layers in the backbone
-        _freeze_norm_layers(backbone)
+        _freeze_layers(backbone, name="norm")
     elif args.experiment.backbone.freeze_norm == "head":
         # freeze all normalization layers in the head
-        _freeze_norm_layers(head)
+        _freeze_layers(head, name="norm")
     elif args.experiment.backbone.freeze_norm != "none":
         raise ValueError(f"Unknown freeze_norm option: {args.experiment.backbone.freeze_norm}")
 
+    if args.experiment.backbone.freeze_bias == "all":
+        # freeze all bias layers
+        _freeze_layers(backbone, name="bias")
+        _freeze_layers(head, name="bias")
+    elif args.experiment.backbone.freeze_bias == "backbone":
+        # freeze all bias layers in the backbone
+        _freeze_layers(backbone, name="bias")
+    elif args.experiment.backbone.freeze_bias == "head":
+        # freeze all bias layers in the head
+        _freeze_layers(head, name="bias")
+    elif args.experiment.backbone.freeze_bias != "none":
+        raise ValueError(f"Unknown freeze_bias option: {args.experiment.backbone.freeze_bias}")
+
     return backbone, head, dataloader_updates
 
-def _freeze_norm_layers(module):
-    # Helper function to freeze normalization layers in a module
+def _freeze_layers(module, name="norm"):
+    # Helper function to freeze specific layers in a module
+    if name == "norm":
+        layers = ["norm", "bn", "gn", "ln"]
+    elif name == "bias":
+        layers = ["bias"]
+    else:
+        raise ValueError(f"Unknown layer type: {name}")
+
     for name, w in module.named_parameters():
-        if any(x in name for x in ["norm", "bn", "gn", "ln"]):
+        if any(x in name for x in layers):
             w.requires_grad = False
 
 ########################## Available Head Types

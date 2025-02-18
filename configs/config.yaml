@@ -73,6 +73,9 @@ experiment:
     # Choose to freeze the norm layers in the model.
     # Can be 'none', 'all', 'backbone', 'head'
     freeze_norm: 'none'
+    # Choose to freeze the bias layers in the model.
+    # Can be 'none', 'all', 'backbone', 'head'
+    freeze_bias: 'none'
     # If available, use half precision:
     half_precision: True
     # If pretraining should be used.

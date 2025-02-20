@@ -505,16 +505,17 @@ def get_backbone_and_head(
         for _, w in backbone.named_parameters():
             w.requires_grad = False
 
+    norm_layers = ["norm", "bn", "gn", "ln"]
     if args.experiment.backbone.freeze_norm == "all":
         # freeze all normalization layers
-        _freeze_layers(backbone, name="norm")
-        _freeze_layers(head, name="norm")
+        _freeze_layers(backbone, name=norm_layers)
+        _freeze_layers(head, name=norm_layers)
     elif args.experiment.backbone.freeze_norm == "backbone":
         # freeze all normalization layers in the backbone
-        _freeze_layers(backbone, name="norm")
+        _freeze_layers(backbone, name=norm_layers)
     elif args.experiment.backbone.freeze_norm == "head":
         # freeze all normalization layers in the head
-        _freeze_layers(head, name="norm")
+        _freeze_layers(head, name=norm_layers)
     elif args.experiment.backbone.freeze_norm != "none":
         raise ValueError(f"Unknown freeze_norm option: {args.experiment.backbone.freeze_norm}")
 
@@ -531,20 +532,27 @@ def get_backbone_and_head(
     elif args.experiment.backbone.freeze_bias != "none":
         raise ValueError(f"Unknown freeze_bias option: {args.experiment.backbone.freeze_bias}")
 
+    for layer in args.experiment.backbone.freeze_layers:
+        layer_prefix, *layer_name = layer.split(".")
+        layer_name = ".".join(layer_name)
+        if layer_prefix == "backbone":
+            _freeze_layers(backbone, name=layer_name)
+        elif layer_prefix == "head":
+            _freeze_layers(head, name=layer_name)
+        else:
+            raise ValueError(f"Unknown freeze_layer prefix: {layer_prefix}, should be 'backbone' or 'head'")
+
     return backbone, head, dataloader_updates
 
-def _freeze_layers(module, name="norm"):
+def _freeze_layers(module, name):
     # Helper function to freeze specific layers in a module
-    if name == "norm":
-        layers = ["norm", "bn", "gn", "ln"]
-    elif name == "bias":
-        layers = ["bias"]
-    else:
-        raise ValueError(f"Unknown layer type: {name}")
-
-    for name, w in module.named_parameters():
-        if any(x in name for x in layers):
+    # name can be a string or list of strings to match against parameter names
+    if isinstance(name, str):
+        name = [name]
+    for param_name, w in module.named_parameters():
+        if any(x in param_name for x in name):
             w.requires_grad = False
+
 
 ########################## Available Head Types
 

@@ -77,6 +77,9 @@ experiment:
     # Can be 'none', 'all', 'backbone', 'head'
     freeze_bias: 'none'
     # If available, use half precision:
+    # Choose to freeze custom layers in the model.
+    # Put the frozen layers in the list.
+    freeze_layers: []
     half_precision: True
     # If pretraining should be used.
     pretrained: False

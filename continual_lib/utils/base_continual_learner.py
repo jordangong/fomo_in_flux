@@ -528,6 +528,25 @@ class BaseContinualLearner(nn.Module):
             self.checkpoint_storage["running"]["backbone"].append(copy.deepcopy(backbone_state_dict))
             self.checkpoint_storage["running"]["head"].append(copy.deepcopy(head_state_dict))
 
+    def compute_grad_norms(self):
+        """
+        Compute gradient norms for each named parameter.
+
+        Returns:
+            dict: Dictionary containing gradient norms per parameter
+        """
+        grad_norms = {}
+
+        # Compute gradient norms for all named parameters
+        for name, param in self.named_parameters():
+            if param.grad is not None:
+                grad_norms[name] = param.grad.detach().norm().item()
+
+        # Store for logging
+        self.last_grad_norms = grad_norms
+
+        return grad_norms
+
     def gradient_update(self, loss: torch.Tensor):
         """Perform gradient update
 
@@ -539,9 +558,14 @@ class BaseContinualLearner(nn.Module):
         """
         self.scaler.scale(loss).backward()
 
+        # Compute gradient norms before clipping if logging enabled
+        self.scaler.unscale_(self.opt)
+        if self.args.log.grad_norms:
+            self.compute_grad_norms()
+
+        # Perform gradient clipping if enabled
         grad_clip_norm = self.args.experiment.optimizer.clip_grad_norm
         if grad_clip_norm > 0:
-            self.scaler.unscale_(self.opt)
             gradient_norm_clipper = lambda params: (
                 torch.nn.utils.clip_grad_norm_(params, grad_clip_norm)
                 if grad_clip_norm > 0
@@ -553,6 +577,7 @@ class BaseContinualLearner(nn.Module):
             _ = gradient_norm_clipper(optim_parameters)
             # Now we make sure to also clip all relevant base backbone parameters.
             _ = gradient_norm_clipper(self.backbone.parameters())
+
         self.scaler.step(self.opt)
         self.scaler.update()
 

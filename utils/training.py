@@ -423,6 +423,12 @@ def train(
                         aux_data = {}
                         aux_data['loss'] = loss
                         aux_data['image_mean'] = data["images"].cpu().numpy().mean()
+
+                        # Add gradient norms to logging
+                        if hasattr(continual_learner, 'last_grad_norms'):
+                            for layer_name, grad_norm in continual_learner.last_grad_norms.items():
+                                aux_data[f'grad_norm.{layer_name}'] = grad_norm
+
                         for lr_idx, used_lr in enumerate(used_lrs):
                             aux_data[f'lr_group-{lr_idx}'] = used_lr
                         aux_data.update(stability_gap_log_dict)

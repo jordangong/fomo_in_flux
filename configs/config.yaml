@@ -240,6 +240,7 @@ log:
   checkpoint_no_recovery: False
   checkpoint_full: False
   full_replication: True
+  grad_norms: False
   folder: './checkpoints'
   project: 'default_project'
   group: 'default_group'

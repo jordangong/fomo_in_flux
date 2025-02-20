@@ -144,14 +144,17 @@ class Model(continual_lib.BaseContinualLearner):
         weight_dict2 = {k: v.to(self.aux_device) for k, v in weight_dict2.items()}
 
         # ensure both the weight dicts have the same key set
-        assert set(weight_dict1.keys()) == set(
-            weight_dict2.keys()
-        ), "Cannot merge weight dictionaries with unequal keys."
-        theta = {
-            key: (1 - self.weight_coefficient) * weight_dict1[key]
-            + self.weight_coefficient * weight_dict2[key]
-            for key in weight_dict1.keys()
-        }
+        assert set(weight_dict1.keys()) == set(weight_dict2.keys()), "Cannot merge weight dictionaries with unequal keys."
+
+        theta = {}
+        for key in weight_dict1.keys():
+            weight1 = weight_dict1[key]
+            if weight1.requires_grad:
+                theta[key] = (1 - self.weight_coefficient) * weight1 \
+                    + self.weight_coefficient * weight_dict2[key]
+            else:
+                theta[key] = weight1
+
         return theta
 
     def define_evaluation_weights(self, **kwargs):

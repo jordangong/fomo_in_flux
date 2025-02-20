@@ -83,17 +83,23 @@ class Model(continual_lib.BaseContinualLearner):
 
         self.gradient_update(loss)
 
+        backbone_requires_grad_params = self.get_requires_grad_params(self.backbone)
+        head_requires_grad_params = self.get_requires_grad_params(self.head)
         # after each step, set the backbone weights and update_model weights to the update
         # from eqn at top of this script
         with torch.no_grad():
             ### update backbone
             self.ema_model_dict["backbone"] = self.average_weights(
-                self.backbone.state_dict(), self.ema_model_dict["backbone"]
+                self.backbone.state_dict(),
+                self.ema_model_dict["backbone"],
+                backbone_requires_grad_params,
             )
 
             ### update head
             self.ema_model_dict["head"] = self.average_weights(
-                self.head.state_dict(), self.ema_model_dict["head"]
+                self.head.state_dict(),
+                self.ema_model_dict["head"],
+                head_requires_grad_params,
             )
 
         return loss.item()
@@ -120,13 +126,29 @@ class Model(continual_lib.BaseContinualLearner):
             **{f"dot-prods.head.{k}": v for k, v in dots["head"].items()},
         }
 
-    def average_weights(self, weight_dict1, weight_dict2):
+    @staticmethod
+    def get_requires_grad_params(module):
         """
-        Averages the weights of two weight dictionaries, `weight_dict1` and `weight_dict2`, based on the `weight_coefficient` attribute.
+        Get the parameter names that require gradient updates in module.
+
+        Returns:
+        - List: A list of parameter names that require gradient updates.
+        """
+        requires_grad_params = []
+        for name, param in module.named_parameters():
+            if param.requires_grad:
+                requires_grad_params.append(name)
+
+        return requires_grad_params
+
+    def average_weights(self, weight_dict1, weight_dict2, requires_grad_params=None):
+        """
+        Averages the requires_grad weights of two weight dictionaries, `weight_dict1` and `weight_dict2`, based on the `weight_coefficient` attribute.
 
         Parameters:
         - weight_dict1 (dict): The first weight dictionary.
         - weight_dict2 (dict): The second weight dictionary.
+        - requires_grad_params (List): A list of parameter names that require gradient updates.
 
         Returns:
         - dict: A dictionary with the averaged weights.
@@ -148,12 +170,11 @@ class Model(continual_lib.BaseContinualLearner):
 
         theta = {}
         for key in weight_dict1.keys():
-            weight1 = weight_dict1[key]
-            if weight1.requires_grad:
-                theta[key] = (1 - self.weight_coefficient) * weight1 \
+            if key in requires_grad_params:
+                theta[key] = (1 - self.weight_coefficient) * weight_dict1[key] \
                     + self.weight_coefficient * weight_dict2[key]
             else:
-                theta[key] = weight1
+                theta[key] = weight_dict1[key]
 
         return theta
 

@@ -321,7 +321,7 @@ class Evaluator:
                     logits = features @ custom_heads[dataset_name].T
 
                     predictions[count:count + batch_size] = logits.data.detach().cpu().to(torch.float32).numpy()
-                    targets[count:count + batch_size] = data['targets'].detach().cpu().to(torch.float32).numpy()
+                    targets[count:count + batch_size] = data['targets'].detach().cpu().numpy()
 
                 count += batch_size
 

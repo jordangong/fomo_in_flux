@@ -27,12 +27,13 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         experiment,
         avg_weight,
         freeze_non_task_logits=None,
         **kwargs
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.weight_coefficient = avg_weight
         self.freeze_non_task_logits = freeze_non_task_logits
         self.global_tasks_seen = []
@@ -57,7 +58,7 @@ class Model(continual_lib.BaseContinualLearner):
         self.opt.zero_grad()
 
         global_task = kwargs["experiment"].global_task
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             # Get masking indices if needed.
             if self.freeze_non_task_logits is not None:
                 if (

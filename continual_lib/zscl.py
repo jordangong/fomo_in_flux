@@ -14,18 +14,19 @@ class Model(continual_lib.BaseContinualLearner):
     REQ_NON_AUG_INPUTS = False
 
     def __init__(
-            self,
-            args,
-            backbone,
-            head,
-            loss,
-            device,
-            experiment,
-            temp,
-            we_freq,
-            l2,
+        self,
+        args,
+        backbone,
+        head,
+        loss,
+        device,
+        amp_dtype,
+        experiment,
+        temp,
+        we_freq,
+        l2,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.distill_temp = temp
         self.we_freq = we_freq
         self.l2 = l2
@@ -99,7 +100,7 @@ class Model(continual_lib.BaseContinualLearner):
 
         """
         self.opt.zero_grad()
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

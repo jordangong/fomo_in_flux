@@ -57,6 +57,7 @@ class BaseContinualLearner(nn.Module):
         head: nn.Module,
         loss: Any,
         device: torch.device,
+        amp_dtype: torch.dtype,
     ) -> None:
         super(BaseContinualLearner, self).__init__()
 
@@ -69,6 +70,7 @@ class BaseContinualLearner(nn.Module):
         self.head = head
         self.loss = loss
         self.device = device
+        self.amp_dtype = amp_dtype
         self.training_mode = self.args.experiment.training
         self.freeze_features = self.args.experiment.backbone.freeze_features
         self.freeze_head = self.args.experiment.backbone.freeze_head
@@ -304,8 +306,9 @@ class BaseContinualLearner(nn.Module):
         elif optimizer == "adam":
             self.opt = torch.optim.AdamW(self.to_optimize)
 
-        ### Mixed Precision Scaler.
-        self.scaler = torch.amp.GradScaler('cuda')
+        ### Mixed Precision Scaler. Disable scaler when using bfloat16. Note that on CPU, the default dtype is torch.bfloat16.
+        grad_scaler_enabled = (self.device.type == "cuda" and self.amp_dtype is None) or self.amp_dtype is torch.float16
+        self.scaler = torch.amp.GradScaler(self.device.type, enabled=grad_scaler_enabled)
 
         # Set up scheduler.
         assert_str = f"No scheduler {scheduler} available. Please choose from {self.AVAILABLE_SCHEDULER}."

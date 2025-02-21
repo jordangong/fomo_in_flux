@@ -8,8 +8,8 @@ from continual_lib.utils import buffer
 class Model(continual_lib.BaseContinualLearner):
     REQ_NON_AUG_INPUTS = False
 
-    def __init__(self, args, backbone, head, loss, device, experiment, alpha, **kwargs):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+    def __init__(self, args, backbone, head, loss, device, amp_dtype, experiment, alpha, **kwargs):
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
         assert_str = "Used buffer.size = 0 for buffer-based continual.method=[er]!"
         assert args.experiment.buffer.size > 0, assert_str
@@ -30,7 +30,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             loss = self.loss(targets=targets, **outputs, **kwargs)
 

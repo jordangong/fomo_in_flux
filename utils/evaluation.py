@@ -26,6 +26,7 @@ class Evaluator:
         args: omegaconf.DictConfig,
         experiment: experiment_lib.PredefinedSequenceExperiment,
         device: torch.device,
+        amp_dtype: torch.dtype,
         log_folder: str,
         evaluation_only_test_datasets: List[torch.utils.data.Dataset],
         generate_plots: bool=True
@@ -41,6 +42,7 @@ class Evaluator:
             'total': {metric: utils.metrics.give(metric) for metric in self.args.experiment.evaluation.total_metrics}
         }
         self.device = device
+        self.amp_dtype = amp_dtype
 
         # This will utilize the dataset_names extracted from the provided data sequence.
         self.datasets_to_evaluate = list(args.experiment.dataset.name) + list(args.experiment.evaluation.additional_datasets)
@@ -246,7 +248,7 @@ class Evaluator:
                 if not is_retrieval_exp:
                     # Simple classification case.
                     classes = test_loader.dataset.PARAMS['classes']
-                    with torch.amp.autocast("cuda"), torch.no_grad():
+                    with torch.amp.autocast(self.device.type, self.amp_dtype), torch.no_grad():
                         embed_coll = continual_learner.head.module.embed_text(classes, self.args.experiment.task.batch_size)
                     custom_heads[dataset_name] = embed_coll
                 else:
@@ -283,7 +285,7 @@ class Evaluator:
                     else:
                         caption_targets = list(range(len(captions)))
 
-                    with torch.amp.autocast("cuda"), torch.no_grad():
+                    with torch.amp.autocast(self.device.type, self.amp_dtype), torch.no_grad():
                         embed_coll = continual_learner.head.module.embed_text(captions, self.args.experiment.task.batch_size)
 
                     custom_heads[dataset_name] = embed_coll
@@ -306,7 +308,7 @@ class Evaluator:
             count = 0
 
             for i, data in enumerate(batch_iterator):
-                with torch.amp.autocast("cuda"), torch.no_grad():
+                with torch.amp.autocast(self.device.type, self.amp_dtype), torch.no_grad():
                     batch_size = len(data['images'])
                     data['images'] = data['images'].to(continual_learner.device)
                     if is_retrieval_exp:
@@ -318,8 +320,8 @@ class Evaluator:
                         features = features / features.norm(dim=-1).reshape(-1, 1)
                     logits = features @ custom_heads[dataset_name].T
 
-                    predictions[count:count + batch_size] = logits.data.detach().cpu().numpy()
-                    targets[count:count + batch_size] = data['targets'].detach().cpu().numpy()
+                    predictions[count:count + batch_size] = logits.data.detach().cpu().to(torch.float32).numpy()
+                    targets[count:count + batch_size] = data['targets'].detach().cpu().to(torch.float32).numpy()
 
                 count += batch_size
 

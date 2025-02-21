@@ -16,6 +16,7 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         scale: float = 1,
         rank: int = 5,
         backbone_block_idcs: List[int] = [0, 1, 2, 3, 4, 5],
@@ -24,7 +25,7 @@ class Model(continual_lib.BaseContinualLearner):
         tune_logit_scale = False,
         **kwargs,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
         self.scale = scale
         self.rank = rank
@@ -181,7 +182,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images.cuda(), **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

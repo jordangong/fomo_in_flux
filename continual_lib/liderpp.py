@@ -8,8 +8,8 @@ from continual_lib.utils import buffer
 class Model(continual_lib.BaseContinualLearner):
     REQ_NON_AUG_INPUTS = False
 
-    def __init__(self, args, backbone, head, loss, device, experiment, alpha):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+    def __init__(self, args, backbone, head, loss, device, amp_dtype, experiment, alpha):
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.buffer = buffer.Buffer(
             args.experiment.buffer.size,
             args.experiment.buffer.batch_size,
@@ -27,7 +27,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, inputs, targets, non_aug_inputs=None, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.backbone(inputs)
             loss = self.loss(outputs, targets)
 

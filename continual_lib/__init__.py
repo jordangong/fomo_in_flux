@@ -42,11 +42,12 @@ def get(
     head: torch.nn.Module,
     loss: Any,
     device: torch.device,
+    amp_dtype: torch.dtype,
     experiment: Any,
     params: dict,
 ):
     mod = get_class(args)
-    return mod(args, backbone, head, loss, device, experiment=experiment, **params)
+    return mod(args, backbone, head, loss, device, amp_dtype, experiment=experiment, **params)
 
 
 def get_loss(args):

@@ -16,12 +16,13 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         experiment,
         alpha,
         lambda_reg,
         max_imp_samples,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.alpha = alpha
         self.lambda_reg = lambda_reg
         self.max_imp_samples = max_imp_samples
@@ -63,7 +64,7 @@ class Model(continual_lib.BaseContinualLearner):
             )
 
             self.opt.zero_grad()
-            with torch.amp.autocast("cuda"):
+            with torch.amp.autocast(self.device.type, self.amp_dtype):
                 outputs = self.backbone(inputs)
                 # We reduce the norm size to avoid infinite gradients with mixed precision.
                 loss = torch.norm(outputs, p="fro", dim=1).pow(2).mean() / 10000
@@ -92,7 +93,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, inputs, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.backbone(inputs)
             penalty = self.penalty()
             base_loss = self.loss(outputs, targets)

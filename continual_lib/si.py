@@ -11,8 +11,8 @@ import continual_lib
 class Model(continual_lib.BaseContinualLearner):
     REQ_NON_AUG_INPUTS = False
 
-    def __init__(self, args, backbone, head, loss, device, experiment, c, xi):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+    def __init__(self, args, backbone, head, loss, device, amp_dtype, experiment, c, xi):
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
         self.backbone_checkpoint = self.get_backbone_params().data.clone().cpu()
         self.head_checkpoint = self.head.module.get_params().data.clone().cpu()
@@ -107,7 +107,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

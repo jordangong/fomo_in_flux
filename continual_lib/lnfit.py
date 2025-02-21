@@ -13,11 +13,12 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         ln_select: str = "all",
         tune_logit_scale=False,
         **kwargs
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
         self.ln_select = ln_select
 
@@ -62,7 +63,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

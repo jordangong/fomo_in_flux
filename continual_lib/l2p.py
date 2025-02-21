@@ -17,6 +17,7 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         prompt_length: int = 5,
         prompt_top_k: int = 5,
         prompt_pool_size: int = 10,
@@ -26,7 +27,7 @@ class Model(continual_lib.BaseContinualLearner):
         output_mode: str = "average",
         **kwargs,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
         self.top_k = prompt_top_k
         self.prompt_align_weight = prompt_align_weight
@@ -96,7 +97,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             loss = self.loss(targets=targets, **outputs, **kwargs)
             loss -= self.prompt_align_weight * self.storage["key_query_sim"]

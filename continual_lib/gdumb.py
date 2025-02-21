@@ -28,7 +28,7 @@ class QuickIterator(torch.utils.data.Dataset):
 
 
 def fit_buffer(
-    model, f_loss, buffer, buffer_transform, device, args, epochs=50, cos_lr_multi=0.01
+    model, f_loss, buffer, buffer_transform, device, amp_dtype, args, epochs=50, cos_lr_multi=0.01
 ) -> None:
     base_lr = args.experiment.optimizer.lr
     optimizer = torch.optim.SGD(
@@ -53,7 +53,8 @@ def fit_buffer(
     )
     epoch_iterator = tqdm.tqdm(range(epochs), desc="Fitting to GDumb Buffer")
 
-    scaler = torch.amp.GradScaler('cuda')
+    grad_scaler_enabled = (device.type == "cuda" and amp_dtype is None) or amp_dtype is torch.float16
+    scaler = torch.amp.GradScaler(device.type, enabled=grad_scaler_enabled)
 
     for epoch in epoch_iterator:
 
@@ -85,7 +86,7 @@ def fit_buffer(
             buf_inputs = buf_inputs.to(device)
             buf_targets = buf_targets.to(device)
 
-            with torch.amp.autocast("cuda"):
+            with torch.amp.autocast(device.type, amp_dtype):
                 buf_outputs = model(buf_inputs)
                 loss = f_loss(buf_outputs, buf_targets.to(torch.long))
                 scaler.scale(loss).backward()
@@ -122,11 +123,12 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         experiment,
         fitting_epochs,
         cos_lr_multi,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.buffer = buffer.Buffer(
             args.experiment.buffer.size,
             args.experiment.buffer.batch_size,
@@ -162,6 +164,7 @@ class Model(continual_lib.BaseContinualLearner):
             self.buffer,
             self.buffer.transform,
             self.device,
+            self.amp_dtype,
             self.args,
             self.fitting_epochs,
             self.cos_lr_multi,

@@ -14,8 +14,8 @@ import utils.conf
 import utils.evaluation
 import utils.training
 import utils.sequence_handling
-import utils.evaluation_fix_sequence
-import utils.training_fix_sequence
+import utils.evaluation
+import utils.training
 from torch.utils.flop_counter import FlopCounterMode
 import numpy as np
 
@@ -169,7 +169,13 @@ def main(args: DictConfig) -> None:
     ### Set default seed.
     if args.experiment.seed is not None:
         utils.conf.set_random_seed(args.experiment.seed)
-    device = "cuda"
+
+    device = torch.device(args.device)
+    amp_dtype = None
+    if args.amp == "fp16":
+        amp_dtype = torch.float16
+    elif args.amp == "bf16":
+        amp_dtype = torch.bfloat16
 
     ### Create per data-mixture batch sizes
     data_mix_batch_sizes = calculate_individual_batch_sizes(
@@ -209,7 +215,7 @@ def main(args: DictConfig) -> None:
     classnames = [list(x) for x in args.experiment.dataset.classes if x is not None]
     classnames = [x for y in classnames for x in y]
     backbone, head, data_params_updates = backbones.get_backbone_and_head(
-        device, args, classnames
+        device, amp_dtype, args, classnames
     )
 
     num_params_backbone = sum([params.numel() for params in backbone.parameters()])
@@ -258,6 +264,7 @@ def main(args: DictConfig) -> None:
         head,
         continual_lib.get_loss(args),
         device,
+        amp_dtype,
         experiment,
         params=args.continual[args.continual.method],
     )
@@ -285,10 +292,11 @@ def main(args: DictConfig) -> None:
     with open_dict(args):
         args.log.log_folder = pathlib.Path(log_folder)
 
-    evaluator = utils.evaluation_fix_sequence.Evaluator(
+    evaluator = utils.evaluation.Evaluator(
         args,
         experiment,
         device,
+        amp_dtype,
         log_folder=log_folder,
         evaluation_only_test_datasets=datasets_dict["eval_only_test"],
     )

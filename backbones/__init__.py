@@ -339,9 +339,9 @@ def convert_model_to_fp32(model: torch.nn.Module):
 
 def get_backbone(
     device: torch.device,
+    amp_dtype: torch.dtype,
     backbone_name: str,
     pretrained: bool,
-    half_precision: bool,
     cache_dir: str = "./cache_dir",
 ):
     optional_text_encoder = None
@@ -408,12 +408,12 @@ def get_backbone(
 
 def get_head(
     device: torch.device,
+    amp_dtype: torch.dtype,
     head_name: str,
     backbone_name: str,
     backbone: torch.nn.Module,
     pretrained: bool,
     classnames: List[str],
-    half_precision: bool,
     cache_dir: str = "./cache_dir",
 ):
     ### Load model head
@@ -443,10 +443,11 @@ def get_head(
             text_encoder = backbone
         else:
             text_encoder = get_backbone(
-                device, text_encoder_name, pretrained, half_precision, cache_dir
+                device, amp_dtype, text_encoder_name, pretrained, cache_dir
             )
         head = SemanticHead(
             device,
+            amp_dtype,
             text_encoder_name,
             text_encoder,
             classnames,
@@ -457,7 +458,10 @@ def get_head(
 
 
 def get_backbone_and_head(
-    device: torch.device, args: omegaconf.DictConfig, classnames: List[str] = None
+    device: torch.device,
+    amp_dtype: torch.dtype,
+    args: omegaconf.DictConfig,
+    classnames: List[str] = None,
 ):
     backbone_name = args.experiment.backbone.name
     assert backbone_name in BACKBONES, f"No backbone {backbone_name} available."
@@ -465,13 +469,16 @@ def get_backbone_and_head(
     head_name = args.experiment.backbone.head
     assert head_name in HEADS, f"No head-type {head_name} available."
 
-    half_precision = args.experiment.backbone.half_precision
     cache_dir = args.experiment.backbone.cache_dir
     pretrained = args.experiment.backbone.pretrained
 
     ### Load up Vision-Backbones
     backbone, optional_text_encoder = get_backbone(
-        device, backbone_name, pretrained, half_precision, cache_dir
+        device,
+        amp_dtype,
+        backbone_name,
+        pretrained,
+        cache_dir,
     )
 
     ### Load corresponding classification / text-embedding head.
@@ -480,12 +487,12 @@ def get_backbone_and_head(
         assert args.experiment.training != "contrastive", assert_str
     head = get_head(
         device,
+        amp_dtype,
         head_name,
         backbone_name,
         optional_text_encoder,
         pretrained,
         classnames,
-        half_precision,
         cache_dir,
     )
 
@@ -604,6 +611,7 @@ class SemanticHead(torch.nn.Module):
     def __init__(
         self,
         device: torch.device,
+        amp_dtype: torch.dtype,
         text_encoder_name: str,
         text_encoder: torch.nn.Module,
         classnames: List[str],
@@ -619,7 +627,7 @@ class SemanticHead(torch.nn.Module):
             self.tokenizer = clip.tokenize
 
         # Tokenize classnames.
-        with torch.amp.autocast("cuda"), torch.no_grad():
+        with torch.amp.autocast(device.type, amp_dtype), torch.no_grad():
             text_tokens = self.tokenizer(classnames).cuda()
 
         self.head = []
@@ -627,7 +635,7 @@ class SemanticHead(torch.nn.Module):
         num_batches = int(np.ceil(len(text_tokens) / batch_size))
 
         # Compute classname embeddings
-        with torch.amp.autocast("cuda"), torch.no_grad():
+        with torch.amp.autocast(device.type, amp_dtype), torch.no_grad():
             for i in tqdm.tqdm(range(num_batches), desc="Encoding text features..."):
                 self.head.append(
                     torch.nn.functional.normalize(

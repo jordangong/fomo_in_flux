@@ -1578,6 +1578,7 @@ for i,text in tqdm.tqdm(enumerate(texts), total=len(texts)):
 
 device = torch.device('cuda')
 _ = backbone.to(device)
+amp_dtype = torch.bfloat16
 
 final_files = []
 final_sketches = []
@@ -1592,7 +1593,7 @@ for i in tqdm.tqdm(range(len(texts))):
         if len(nouns) == 1:
             final_class.append(nouns[0])
         else:
-            with torch.amp.autocast("cuda"), torch.no_grad():
+            with torch.amp.autocast(device.type, amp_dtype), torch.no_grad():
                 img = transform(Image.open(img_path).convert('RGB')).to(device)
                 img_embed = torch.nn.functional.normalize(backbone.encode_image(img.unsqueeze(0)), dim=-1)
                 text_embed = torch.nn.functional.normalize(backbone.encode_text(tokenizer(['A photo of {}'.format(x) for x in nouns]).to(device)))

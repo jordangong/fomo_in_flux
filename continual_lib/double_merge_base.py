@@ -25,13 +25,14 @@ class DoubleMergeBase(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         experiment,
         backbone_merge,
         head_merge,
         freeze_non_task_logits=None,
         **kwargs,
     ):
-        super(DoubleMergeBase, self).__init__(args, backbone, head, loss, device)
+        super(DoubleMergeBase, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.freeze_non_task_logits = freeze_non_task_logits
         self.global_tasks_seen = []
         self.task_mask = torch.ones(experiment.total_num_classes)
@@ -49,7 +50,7 @@ class DoubleMergeBase(continual_lib.BaseContinualLearner):
         self.opt.zero_grad()
 
         global_task = kwargs["experiment"].global_task
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             # Get masking indices if needed.
             if self.freeze_non_task_logits is not None:
                 if (

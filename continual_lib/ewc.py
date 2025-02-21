@@ -20,13 +20,14 @@ class Model(continual_lib.BaseContinualLearner):
         head,
         loss,
         device,
+        amp_dtype,
         experiment,
         e_lambda,
         gamma,
         fim_avg,
         max_fim_samples,
     ):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
         self.logsoft = torch.nn.LogSoftmax(dim=1)
 
         self.penalty_checkpoint_backbone = None
@@ -137,7 +138,7 @@ class Model(continual_lib.BaseContinualLearner):
                 texts = None
 
             self.opt.zero_grad()
-            with torch.amp.autocast("cuda"):
+            with torch.amp.autocast(self.device.type, self.amp_dtype):
                 # Update get grads options.
                 outputs = self.forward(
                     experiment=experiment, images=images, texts=texts, targets=targets
@@ -178,7 +179,7 @@ class Model(continual_lib.BaseContinualLearner):
     def observe(self, images, targets, **kwargs):
         self.opt.zero_grad()
 
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

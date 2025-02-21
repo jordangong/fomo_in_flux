@@ -17,9 +17,12 @@ verbosity: 1
 ### Zeroshot Evaluation
 # If set, will not perform any training, and only evaluate zero-shot performances.
 zeroshot_only: False
-### Devices to utilize.
+### Devices to utilize. Choose between 'cpu' and 'cuda'.
+device: 'cuda'
+### GPU IDs to use. If multiple, separate by comma.
 gpu: [0]
-
+### AMP autocast precision. Choose between null (for default), 'float16' and 'bfloat16'.
+amp: null
 
 ########################## Continual Learning Experiment Parameters.
 experiment:

@@ -11,8 +11,8 @@ import torch
 class Model(continual_lib.BaseContinualLearner):
     REQ_NON_AUG_INPUTS = False
 
-    def __init__(self, args, backbone, head, loss, device, **kwargs):
-        super(Model, self).__init__(args, backbone, head, loss, device)
+    def __init__(self, args, backbone, head, loss, device, amp_dtype, **kwargs):
+        super(Model, self).__init__(args, backbone, head, loss, device, amp_dtype)
 
     def observe(self, images, targets, **kwargs):
         """Continual Learner Single Training Step
@@ -23,7 +23,7 @@ class Model(continual_lib.BaseContinualLearner):
 
         """
         self.opt.zero_grad()
-        with torch.amp.autocast("cuda"):
+        with torch.amp.autocast(self.device.type, self.amp_dtype):
             outputs = self.forward(images=images, **kwargs)
             logit_scale = getattr(self.head.module.text_encoder, "logit_scale", 1.0)
             temp = 1.0 / logit_scale.exp()

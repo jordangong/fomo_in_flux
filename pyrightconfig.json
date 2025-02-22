@@ -1,0 +1,10 @@
+{
+    "exclude": [
+        "cache",
+        "cache_dir",
+        "checkpoints",
+        "logs",
+        "data",
+        "results",
+    ]
+}

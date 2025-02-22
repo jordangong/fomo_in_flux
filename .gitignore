@@ -19,5 +19,6 @@ cache_dir
 cache
 checkpoints
 logs
+results
 OBSOLETE
 

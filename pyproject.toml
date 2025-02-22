@@ -1,0 +1,6 @@
+[project]
+name = "fomo-in-flux"
+version = "0.1.0"
+description = "fomo-in-flux"
+requires-python = ">=3.12"
+dependencies = []

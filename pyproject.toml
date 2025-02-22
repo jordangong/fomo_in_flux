@@ -4,3 +4,30 @@ version = "0.1.0"
 description = "fomo-in-flux"
 requires-python = ">=3.12"
 dependencies = []
+
+[tool.pyright]
+exclude = [
+    ".venv",
+    "**/__pycache__",
+    "data_lib/00_info",
+    "cache",
+    "cache_dir",
+    "checkpoints",
+    "logs",
+    "data",
+    "results",
+]
+
+reportArgumentType = "warning"
+reportAssignmentType = "warning"
+reportReturnType = "warning"
+reportPossiblyUnboundVariable = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalMemberAccess = "warning"
+reportOptionalCall = "warning"
+reportOptionalIterable = "warning"
+reportOptionalContextManager = "warning"
+reportOptionalOperand = "warning"
+reportAttributeAccessIssue = "warning"
+reportPrivateImportUsage = "warning"
+reportIncompatibleMethodOverride = "warning"

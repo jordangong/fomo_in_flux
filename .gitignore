@@ -9,6 +9,7 @@ __pycache__
 # Tools
 .idea
 .vscode
+.venv
 wandb
 
 # Folders

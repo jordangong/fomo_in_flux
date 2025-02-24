@@ -1,5 +1,6 @@
 import abc
 import copy
+from functools import partial
 from typing import List
 
 import clip
@@ -673,7 +674,7 @@ class ClipTextHead(torch.nn.Module):
                 openclip_conv[text_encoder_name][0]
             )
         else:
-            self.tokenizer = clip.tokenize
+            self.tokenizer = partial(clip.tokenize, truncate=True)
         self.text_encoder = text_encoder.cuda()
 
     def get_params(self) -> torch.Tensor:

@@ -15,6 +15,7 @@ wandb
 # Folders
 ./src/*
 ./src
+slurm/*.out
 data
 cache_dir
 cache

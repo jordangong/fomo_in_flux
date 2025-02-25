@@ -4,9 +4,11 @@ from functools import partial
 from typing import List
 
 import clip
+from matplotlib.pylab import normal
 import numpy as np
 import omegaconf
 import open_clip
+from regex import F
 import timm
 import torch
 import tqdm
@@ -550,6 +552,8 @@ def get_backbone_and_head(
         else:
             raise ValueError(f"Unknown freeze_layer prefix: {layer_prefix}, should be 'backbone' or 'head'")
 
+    backbone = handle_outlier_rescaling(backbone, args.experiment.backbone.outlier_rescale)
+
     return backbone, head, dataloader_updates
 
 def _freeze_layers(module, name):
@@ -561,6 +565,67 @@ def _freeze_layers(module, name):
         if any(x in param_name for x in name):
             w.requires_grad = False
 
+def find_outliers(data, k=1.):
+    """
+    Find outliers in 1D positive float data using IQR method.
+
+    Args:
+        data: numpy array or list of floats
+        k: multiplier for IQR (default=1.)
+    
+    Returns:
+        tuple: (outlier_indices, outlier_values, normal_indices, normal_values)
+    """
+    q1, q3 = np.percentile(data, [25, 75])
+    iqr = q3 - q1
+
+    lower_bound = q1 - k * iqr
+    upper_bound = q3 + k * iqr
+
+    # Find outlier indices (considering only upper bound for positive data)
+    outlier_mask = (data > upper_bound) | (data < lower_bound)
+    outlier_indices = np.where(outlier_mask)[0]
+    outlier_values = data[outlier_indices]
+
+    normal_indices = np.where(~outlier_mask)[0]
+    normal_values = data[normal_indices]
+
+    return outlier_indices, outlier_values, normal_indices, normal_values
+
+def _collect_ln2_weights(backbone):
+    """Collect layer norm 2 weights from backbone."""
+    ln_2_weights = {}
+    for name, param in backbone.named_parameters():
+        if "ln_2.weight" in name:
+            ln_2_weights[name] = param
+    return ln_2_weights
+
+def _rescale_outliers(ln_2_weights, k):
+    """Rescale outlier layer norm weights to the mean of normal weights."""
+    ln_2_norms = np.asarray([torch.norm(w, p=2).item() for w in ln_2_weights.values()])
+    outlier_indices, outlier_norms, _, normal_norms = find_outliers(ln_2_norms, k=k)
+    
+    if len(outlier_indices) > 0:
+        names = list(ln_2_weights.keys())
+        normal_norms_mean = np.mean(normal_norms)
+        print(f"Found outliers in layer norm 2 norms: {outlier_norms.tolist()}, mean of normal norms: {normal_norms_mean}")
+        print("Rescaling outlier norms to the mean of normal norms...")
+        
+        for idx in outlier_indices:
+            ln_2_weights[names[idx]].data *= normal_norms_mean / ln_2_norms[idx]
+            ln_2_norms[idx] = torch.norm(ln_2_weights[names[idx]], p=2).item()
+            
+    print(f"Layer norm 2 norms: {ln_2_norms.tolist()}")
+    return ln_2_weights
+
+def handle_outlier_rescaling(backbone, k):
+    """Handle outlier rescaling if enabled."""
+    if k > 0:
+        ln_2_weights = _collect_ln2_weights(backbone)
+        if ln_2_weights:
+            updated_weights = _rescale_outliers(ln_2_weights, k)
+            backbone.load_state_dict(updated_weights, strict=False)
+    return backbone
 
 ########################## Available Head Types
 

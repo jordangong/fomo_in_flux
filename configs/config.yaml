@@ -87,6 +87,8 @@ experiment:
     # If pretraining should be used.
     pretrained: False
 
+    outlier_rescale: -1
+
     # cache_dir from where to load/save the pre-trained model
     cache_dir: './cache_dir'
 

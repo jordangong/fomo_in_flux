@@ -11,6 +11,7 @@ import omegaconf
 import termcolor
 import torch
 import tqdm
+from wandb.integration.sklearn.plot.regressor import residuals
 
 import backbones
 import continual_lib
@@ -403,8 +404,18 @@ class Evaluator:
     ):
         if self.args.experiment.task.num > 1:
             termcolor.cprint(f'\nEvaluation Current Task {experiment.task + 1}/{self.args.experiment.task.num}:', 'white', attrs=["underline"])
-            curr_task = experiment.task
-            task_dataset_flags = [experiment.all_train_idcs[dataset_name][curr_task] is not None for dataset_name in experiment.dataset_names]
+            # Convert task to result index.
+            if self.args.experiment.evaluation.every_nth_task > 0:
+                resid = (experiment.task + 1) // self.args.experiment.evaluation.every_nth_task
+                # Always evaluate on first and last task!
+                if experiment.task + 1 == 1:
+                    resid = 0
+                elif experiment.task + 1 == self.args.experiment.task.num:
+                    resid = -1
+            else:
+                resid = experiment.task
+
+            task_dataset_flags = [experiment.all_train_idcs[dataset_name][resid] is not None for dataset_name in experiment.dataset_names]
             task_datasets = np.array(experiment.dataset_names)[task_dataset_flags]
             num_datasets = sum(task_dataset_flags)
             termcolor.cprint(f'Covering {num_datasets} adaptation dataset(s).\n', 'yellow', attrs=[])
@@ -418,7 +429,7 @@ class Evaluator:
                     if v and k in self.metrics['total']:
                         valid_results[k] = v
                 for metric_name, metric_value in valid_results.items():
-                    res_arr = np.array(metric_value)[curr_task]
+                    res_arr = np.array(metric_value)[resid]
                     if not isinstance(res_arr, list):
                         res_arr = [res_arr]
                     res = ['{0:3.2f}%'.format(x) for x in res_arr]
